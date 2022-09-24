@@ -1,0 +1,22 @@
+﻿.DS_Store
+.vs
+
+*.DotSettings.user
+
+bin/
+obj/
+*.dll
+
+*.log
+
+# Docker environment file
+.env
+
+# Certificates and keys
+cert.conf
+*.pem
+*.csr
+*.crt
+*.key
+*.pfx
+*.srl

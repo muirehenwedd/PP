@@ -8,8 +8,46 @@ namespace Data;
 
 public class ThreadTools
 {
-    internal static double F1(double[] a, double[] b, double[] c, double[,] ma, double[,] me) =>
-        b.Concat(c).Max() + (DenseMatrix.OfArray(ma) * DenseMatrix.OfArray(me) * b + a).Min();
+    internal static void F1()
+    {
+        static double Calculate(double[] a, double[] b, double[] c, double[,] ma, double[,] me)
+        {
+            return b.Concat(c).Max() + (DenseMatrix.OfArray(ma) * DenseMatrix.OfArray(me) * b + a).Min();
+        }
+
+        var config = GetConfiguration();
+        var n = config.N;
+
+        double result;
+        if (n <= 4)
+        {
+            var (a, b, c, ma, me) = GetInputsForT1(n);
+            result = Calculate(a, b, c, ma, me);
+        }
+        else
+        {
+            result = config.ValueGeneration switch
+            {
+                ValueGenerationMode.RandomValues =>
+                    Calculate(
+                        GetRandomVector(n),
+                        GetRandomVector(n),
+                        GetRandomVector(n),
+                        GetRandomMatrix(n),
+                        GetRandomMatrix(n)),
+
+                ValueGenerationMode.FillValues =>
+                    Calculate(
+                        GetFilledVector(n, config.FillValue),
+                        GetFilledVector(n, config.FillValue),
+                        GetFilledVector(n, config.FillValue),
+                        GetFilledMatrix(n, config.FillValue),
+                        GetFilledMatrix(n, config.FillValue))
+            };
+        }
+
+        Console.WriteLine($"Thread 'T1' finished work and returned result: {result.Round(2)}\n");
+    }
 
     internal static double[][] F2(double[,] mf, double[,] mk) =>
         (DenseMatrix.OfArray(mf).Transpose() * DenseMatrix.OfArray(mk)).ToRowArrays().OrderBy(c => c.Sum()).ToArray();
@@ -20,41 +58,7 @@ public class ThreadTools
 
     public static void StartT1()
     {
-        var config = Configuration.GetConfiguration();
-        var n = config.N;
-
-        var t = new Thread(() =>
-        {
-            double result;
-            if (n <= 4)
-            {
-                var (a, b, c, ma, me) = GetInputsForT1(n);
-                result = F1(a, b, c, ma, me);
-            }
-            else
-            {
-                result = config.ValueGeneration switch
-                {
-                    ValueGenerationMode.RandomValues =>
-                        F1(
-                            GetRandomVector(n),
-                            GetRandomVector(n),
-                            GetRandomVector(n),
-                            GetRandomMatrix(n),
-                            GetRandomMatrix(n)),
-
-                    ValueGenerationMode.FillValues =>
-                        F1(
-                            GetFilledVector(n, config.FillValue),
-                            GetFilledVector(n, config.FillValue),
-                            GetFilledVector(n, config.FillValue),
-                            GetFilledMatrix(n, config.FillValue),
-                            GetFilledMatrix(n, config.FillValue))
-                };
-            }
-
-            Console.WriteLine($"Thread 'T1' finished work and returned result: {result.Round(2)}\n");
-        }, 100000)
+        var t = new Thread(F1, 100000)
         {
             Priority = ThreadPriority.Highest,
             Name = "T1"
